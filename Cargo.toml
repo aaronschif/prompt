@@ -1,0 +1,9 @@
+[package]
+name = "prompt"
+version = "0.1.0"
+authors = ["Aaron Schif <aschif@netdevgroup.com>"]
+
+[dependencies]
+termion = "1.1.4"
+regex = "0.2"
+git2 = "0.6.4"
