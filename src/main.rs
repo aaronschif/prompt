@@ -12,44 +12,54 @@ use regex::Regex;
 
 use git::{format, Status};
 
-fn virtualenv() -> String {
+fn virtualenv() -> Option<String> {
     let r = Regex::new(r"([^/]*)/[^/]*$").unwrap();
     match env::var("VIRTUAL_ENV") {
-        Ok(virt) => format!("PY{} ", r.captures(virt.as_str()).unwrap().get(1).unwrap().as_str()).to_string(),
-        Err(_) => "".to_string()
+        Ok(virt) => Some(r.captures(&virt).unwrap().get(1).unwrap().as_str().to_string()),
+        Err(_) => None,
     }
 }
 
-fn main() {
-    let path_repr: String = match Path::new(".").canonicalize() {
+fn path() -> Option<String> {
+    match Path::new(".").canonicalize() {
         Ok(path) => {
             let r = path.to_str().unwrap().to_string();
             match env::var("HOME") {
                 Ok(home) => {
                     let mat = Regex::new(format!("^{}", home).as_str()).unwrap();
-                    mat.replace(r.as_str(), "~").into_owned()
+                    Some(mat.replace(&r, "~").into_owned())
                 },
-                Err(_) => r
+                Err(_) => Some(r)
             }
         },
-        Err(_) => "!".to_string(),
+        Err(_) => None
+    }
+}
+
+fn main() {
+    let bold = format!("%{{{}%}}", style::Bold);
+    let reset = format!("%{{{}%}}", color::Fg(color::Reset));
+    let fg = format!("%{{{}%}}", color::Fg(color::Rgb(0, 147, 255)));
+    let bg = format!("%{{{}%}}", color::Fg(color::Rgb(51, 232, 29)));
+
+    let mut result: Vec<String> = vec![bold];
+
+    if let Ok(status) = Status::from_cwd() {
+        result.push(format!("{}GIT{}{} ", fg, bg, format(&status)));
     };
 
-    let git_repr: String = match Status::from_cwd() {
-        Ok(status) => format!("GIT{} ", format(&status)),
-        Err(_) => "".to_string(),
-    };
+    if let Some(virt_repr) = virtualenv() {
+        result.push(format!("{}PY{}{} ", fg, bg, virt_repr));
+    }
 
-    println!(
-        "{bold}{}{}{g}{} {b}λ  {r}",
-        virtualenv(),
-        git_repr,
-        path_repr,
-        // g=color::Fg(color::Green),
-        g=color::Fg(color::Rgb(51, 232, 29)),
-        // b=color::Fg(color::Blue),
-        bold=style::Bold,
-        b=color::Fg(color::Rgb(0, 147, 255)),
-        r=color::Fg(color::Reset),
-    );
+    result.push("\n".to_string());
+
+    result.push(bg);
+    result.push(match path() {Some(p) => p, None => "!".to_string()});
+    result.push(" ".to_string());
+    result.push(fg);
+    result.push("∴ ".to_string());
+    result.push(reset);
+
+    print!("{}", result.join(""));
 }
