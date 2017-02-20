@@ -38,28 +38,33 @@ fn path() -> Option<String> {
 
 fn main() {
     let bold = format!("%{{{}%}}", style::Bold);
-    let reset = format!("%{{{}%}}", color::Fg(color::Reset));
+    let reset = format!("%{{{}{}%}}", color::Fg(color::Reset), style::Reset);
     let fg = format!("%{{{}%}}", color::Fg(color::Rgb(0, 147, 255)));
     let bg = format!("%{{{}%}}", color::Fg(color::Rgb(51, 232, 29)));
 
-    let mut result: Vec<String> = vec![bold];
+    let mut result: String = "".to_string();
+
+    result.push_str(&bold);
 
     if let Ok(status) = Status::from_cwd() {
-        result.push(format!("{}GIT{}{} ", fg, bg, format(&status)));
+        result.push_str(&format!("{}GIT{}{} ", fg, bg, format(&status)));
     };
 
     if let Some(virt_repr) = virtualenv() {
-        result.push(format!("{}PY{}{} ", fg, bg, virt_repr));
+        result.push_str(&format!("{}PY{}{} ", fg, bg, virt_repr));
     }
 
-    result.push("\n".to_string());
+    if result.len() > 80 {
+        result.push_str("\n");
+    }
 
-    result.push(bg);
-    result.push(match path() {Some(p) => p, None => "!".to_string()});
-    result.push(" ".to_string());
-    result.push(fg);
-    result.push("∴ ".to_string());
-    result.push(reset);
+    result.push_str(&bg);
+    result.push_str(match path() {Some(ref p) => &p, None => "!"});
+    result.push_str(" ");
+    result.push_str(&fg);
+    // result.push_str("∴ ");
+    result.push_str("λ ");
+    result.push_str(&reset);
 
-    print!("{}", result.join(""));
+    print!("{}", result);
 }
