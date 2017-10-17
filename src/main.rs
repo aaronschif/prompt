@@ -80,8 +80,28 @@ fn sc_prompt(app: &ArgMatches) {
 }
 
 fn sc_init(app: &ArgMatches) {
-    println!(r#"PROMPT="\$({} prompt --last-error \$?)""#,
-        Path::new(&env::args().nth(0).unwrap()).canonicalize().unwrap().to_str().unwrap());
+    println!(r#"
+        PROMPT="\$({exe} prompt --last-error \$?)"
+        function _make_prompt {{ {exe} preexec "$1" }}
+        function _make_stop_prompt {{ {exe} precmd }}
+        preexec_functions=()
+        preexec_functions+=_make_prompt
+        precmd_functions=()
+        precmd_functions+=_make_stop_prompt
+        "#,
+        exe=Path::new(&env::args().nth(0).unwrap()).canonicalize().unwrap().to_str().unwrap());
+}
+
+fn sc_preexec(app: &ArgMatches) {
+    let mut cmd: String = app.value_of("command").unwrap().to_string();
+    cmd = cmd.replace("&", ",")
+        ;
+    print!("\u{01b}]0;$ {}\u{007}", cmd);
+}
+
+fn sc_precmd(app: &ArgMatches) {
+    let cmd = "";
+    print!("\u{01b}]0;{}\u{007}", cmd);
 }
 
 fn main() {
@@ -97,11 +117,21 @@ fn main() {
                 .long("last-error")
                 .help("-")))
         .subcommand(SubCommand::with_name("init"))
+        .subcommand(SubCommand::with_name("preexec")
+            .arg(Arg::with_name("command")
+            .required(true)))
+        .subcommand(SubCommand::with_name("precmd"))
         .get_matches();
 
     if let Some(matches) = app.subcommand_matches("prompt") {
         sc_prompt(&matches);
     } else if let Some(matches) = app.subcommand_matches("init") {
         sc_init(&matches);
+    } else if let Some(matches) = app.subcommand_matches("preexec") {
+        sc_preexec(matches);
+    } else if let Some(matches) = app.subcommand_matches("precmd") {
+        sc_precmd(matches);
+    } else {
+        println!("{}", app.usage());
     }
 }
