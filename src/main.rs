@@ -15,6 +15,15 @@ use regex::Regex;
 
 use git::{format, Status};
 
+fn ssh_hostname() -> Option<String> {
+    if let Ok(_) = env::var("SSH_CONNECTION") {
+        if let Ok(host) = env::var("HOST") {
+            return Some(host.into());
+        }
+    }
+    return None;
+}
+
 fn virtualenv() -> Option<String> {
     let r = Regex::new(r"([^/]*)/[^/]*$").unwrap();
     match env::var("VIRTUAL_ENV") {
@@ -54,6 +63,10 @@ fn sc_prompt(app: &ArgMatches) {
         Some(last_error) if last_error != "0" =>
             result.push_str(&format!("{}?{}{} ", fg, bg, last_error)),
         _ => {}
+    }
+
+    if let Some(hostname) = ssh_hostname() {
+        result.push_str(&format!("{}SSH{}{} ", fg, bg, hostname));
     }
 
     if let Some(virt_repr) = virtualenv() {
