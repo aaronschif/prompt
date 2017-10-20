@@ -3,12 +3,14 @@ extern crate regex;
 extern crate git2;
 #[macro_use]
 extern crate clap;
+extern crate hostname;
 
 mod git;
 
 use std::path::Path;
 use std::env;
 
+use hostname::get_hostname;
 use clap::{App, Arg, SubCommand, ArgMatches};
 use termion::{color, style};
 use regex::Regex;
@@ -17,7 +19,7 @@ use git::{format, Status};
 
 fn ssh_hostname() -> Option<String> {
     if let Ok(_) = env::var("SSH_CONNECTION") {
-        if let Ok(host) = env::var("HOST") {
+        if let Some(host) = get_hostname() {
             return Some(host.into());
         }
     }
@@ -66,7 +68,7 @@ fn sc_prompt(app: &ArgMatches) {
     }
 
     if let Some(hostname) = ssh_hostname() {
-        result.push_str(&format!("{}SSH{}{} ", fg, bg, hostname));
+        result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
     }
 
     if let Some(virt_repr) = virtualenv() {
@@ -97,9 +99,9 @@ fn sc_init(app: &ArgMatches) {
         PROMPT="\$({exe} prompt --last-error \$?)"
         function _make_prompt {{ {exe} preexec "$1" }}
         function _make_stop_prompt {{ {exe} precmd }}
-        preexec_functions=()
+        typeset -a preexec_functions
         preexec_functions+=_make_prompt
-        precmd_functions=()
+        typeset -a precmd_functions
         precmd_functions+=_make_stop_prompt
         "#,
         exe=Path::new(&env::args().nth(0).unwrap()).canonicalize().unwrap().to_str().unwrap());
