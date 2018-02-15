@@ -3,17 +3,28 @@ extern crate regex;
 extern crate git2;
 #[macro_use]
 extern crate clap;
+extern crate hostname;
 
 mod git;
 
 use std::path::Path;
 use std::env;
 
+use hostname::get_hostname;
 use clap::{App, Arg, SubCommand, ArgMatches};
 use termion::{color, style};
 use regex::Regex;
 
 use git::{format, Status};
+
+fn ssh_hostname() -> Option<String> {
+    if let Ok(_) = env::var("SSH_CONNECTION") {
+        if let Some(host) = get_hostname() {
+            return Some(host.into());
+        }
+    }
+    return None;
+}
 
 fn virtualenv() -> Option<String> {
     let r = Regex::new(r"([^/]*)/[^/]*$").unwrap();
@@ -52,12 +63,17 @@ fn sc_prompt(app: &ArgMatches) {
 
     match app.value_of("lasterror") {
         Some(last_error) if last_error != "0" =>
-            result.push_str(&format!("{}?{}{} ", fg, bg, last_error)),
+            result.push_str(&format!("{}✘{}{} ", fg, bg, last_error)),
         _ => {}
+        // ✔
+    }
+
+    if let Some(hostname) = ssh_hostname() {
+        result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
     }
 
     if let Some(virt_repr) = virtualenv() {
-        result.push_str(&format!("{}PY{}{} ", fg, bg, virt_repr));
+        result.push_str(&format!("{}🐍{}{} ", fg, bg, virt_repr));
     }
 
     if let Ok(status) = Status::from_cwd() {
@@ -65,7 +81,7 @@ fn sc_prompt(app: &ArgMatches) {
     };
 
     if result.len() > 80 {
-        result.push_str("\n");
+        result.push_str(&format!("{}\n🢆{} ", fg, bg));
     }
 
     result.push_str(&bg);
@@ -81,12 +97,12 @@ fn sc_prompt(app: &ArgMatches) {
 
 fn sc_init(app: &ArgMatches) {
     println!(r#"
-        PROMPT="\$({exe} prompt --last-error \$?)"
-        function _make_prompt {{ {exe} preexec "$1" }}
+        PROMPT='$({exe} prompt --last-error $?)'
+        function _make_prompt {{ {exe} preexec "" }}
         function _make_stop_prompt {{ {exe} precmd }}
-        preexec_functions=()
+        typeset -a preexec_functions
         preexec_functions+=_make_prompt
-        precmd_functions=()
+        typeset -a precmd_functions
         precmd_functions+=_make_stop_prompt
         "#,
         exe=Path::new(&env::args().nth(0).unwrap()).canonicalize().unwrap().to_str().unwrap());
@@ -94,8 +110,7 @@ fn sc_init(app: &ArgMatches) {
 
 fn sc_preexec(app: &ArgMatches) {
     let mut cmd: String = app.value_of("command").unwrap().to_string();
-    cmd = cmd.replace("&", ",")
-        ;
+    cmd = cmd.replace("&", ",");
     print!("\u{01b}]0;$ {}\u{007}", cmd);
 }
 
@@ -105,7 +120,6 @@ fn sc_precmd(app: &ArgMatches) {
 }
 
 fn main() {
-
     let app = App::new("prompt")
         .version(crate_version!())
         .author(crate_authors!())
