@@ -72,6 +72,10 @@ fn sc_prompt(app: &ArgMatches) {
         result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
     }
 
+    if let Some(hostname) = ssh_hostname() {
+        result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
+    }
+
     if let Some(virt_repr) = virtualenv() {
         result.push_str(&format!("{}🐍{}{} ", fg, bg, virt_repr));
     }
