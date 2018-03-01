@@ -64,19 +64,15 @@ fn sc_prompt(app: &ArgMatches) {
     match app.value_of("lasterror") {
         Some(last_error) if last_error != "0" =>
             result.push_str(&format!("{}✘{}{} ", fg, bg, last_error)),
-        _ => {}
-        // ✔
+        _ =>
+            result.push_str(&format!("{}✔{} ", fg, bg)),
     }
 
     if let Some(hostname) = ssh_hostname() {
         result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
     }
 
-    if let Some(hostname) = ssh_hostname() {
-        result.push_str(&format!("{}⇆{}{} ", fg, bg, hostname));
-    }
-
-    if let Some(virt_repr) = virtualenv() {
+    if let Some(_) = virtualenv() {
         result.push_str(&format!("{}🐍\u{FE0E}{} ", fg, bg));
     }
 
@@ -98,7 +94,7 @@ fn sc_prompt(app: &ArgMatches) {
     print!("{}", result);
 }
 
-fn sc_init(app: &ArgMatches) {
+fn sc_init(_: &ArgMatches) {
     println!(r#"
         PROMPT='$({exe} prompt --last-error $?)'
         function _make_prompt {{ {exe} preexec "" }}
@@ -117,7 +113,7 @@ fn sc_preexec(app: &ArgMatches) {
     print!("\u{01b}]0;$ {}\u{007}", cmd);
 }
 
-fn sc_precmd(app: &ArgMatches) {
+fn sc_precmd(_: &ArgMatches) {
     let cmd = "";
     print!("\u{01b}]0;{}\u{007}", cmd);
 }
@@ -133,7 +129,9 @@ fn main() {
                 .value_name("last error")
                 .long("last-error")
                 .help("-")))
-        .subcommand(SubCommand::with_name("init"))
+        .subcommand(SubCommand::with_name("init")
+            .about("Setup shell")
+            .usage("Add this line to config. `eval \"$(prompt init)\"`"))
         .subcommand(SubCommand::with_name("preexec")
             .arg(Arg::with_name("command")
             .required(true)))
