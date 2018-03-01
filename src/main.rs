@@ -77,23 +77,22 @@ fn sc_prompt(app: &ArgMatches) {
     }
 
     if let Some(virt_repr) = virtualenv() {
-        result.push_str(&format!("{}🐍{}{} ", fg, bg, virt_repr));
+        result.push_str(&format!("{}🐍\u{FE0E}{} ", fg, bg));
     }
 
     if let Ok(status) = Status::from_cwd() {
-        result.push_str(&format!("{}GIT{}{} ", fg, bg, format(&status)));
+        result.push_str(&format!("{}🌲\u{FE0E}{}{} ", fg, bg, format(&status)));
     };
 
     if result.len() > 80 {
-        result.push_str(&format!("{}\n🢆{} ", fg, bg));
+        result.push_str(&format!("{}\n{}", fg, bg));
     }
 
     result.push_str(&bg);
     result.push_str(match path() {Some(ref p) => &p, None => "!"});
     result.push_str(" ");
     result.push_str(&fg);
-    // result.push_str("∴ ");
-    result.push_str("λ ");
+    result.push_str("∴ ");
     result.push_str(&reset);
 
     print!("{}", result);
