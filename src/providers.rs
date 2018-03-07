@@ -12,9 +12,13 @@ pub struct PromptPath {
 impl PromptPath {
 
     fn shorten_parts(parts: &mut Vec<String>) {
+        if parts.len() == 0 {
+            return;
+        }
+
         let l = parts.len() - 1;
         for p in parts.iter_mut().take(l) {
-            *p = p[..1].to_string();
+            *p = p.chars().next().unwrap().to_string();
         }
     }
 
@@ -38,10 +42,10 @@ impl PromptPath {
         let mut parts: Vec<String>;
         if let Some(hd) = home_path {
             parts = hd.components().map(|part|part.as_os_str().to_str().unwrap().to_string()).collect();
-            parts.insert(0, self.home_string.clone().unwrap());
             if self.shorten {
                 Self::shorten_parts(&mut parts);
             };
+            parts.insert(0, self.home_string.clone().unwrap());
         } else {
             parts = cwd.components().map(|part|part.as_os_str().to_str().unwrap().to_string()).collect();
             if self.shorten {

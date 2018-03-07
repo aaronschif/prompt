@@ -6,6 +6,6 @@ authors = ["Aaron Schif <aschif@netdevgroup.com>"]
 [dependencies]
 termion = "1.1.4"
 regex = "0.2"
-git2 = "0.6.4"
+git2 = "0.7.0"
 clap = "2.20.5"
 hostname = "0.1.3"
