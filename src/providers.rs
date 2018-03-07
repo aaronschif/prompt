@@ -8,24 +8,20 @@ pub struct PromptPath {
     pub shorten: bool
 }
 
-pub struct PromptResult {
-    home: bool,
-    cwd: PathBuf,
-}
 
 impl PromptPath {
 
     fn shorten_parts(parts: &mut Vec<String>) {
         let l = parts.len() - 1;
-        for p in parts.iter_mut().take(l).skip(1) {
+        for p in parts.iter_mut().take(l) {
             *p = p[..1].to_string();
         }
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> Option<String> {
         let cwd = match Path::new(".").canonicalize() {
             Ok(path) => path.to_path_buf(),
-            Err(_) => return "!".to_string(),
+            Err(_) => return None,
         };
 
         let home_path: Option<PathBuf> = {
@@ -39,18 +35,20 @@ impl PromptPath {
             }
         };
 
-        let mut parts = cwd.components().map(|part|part.as_os_str().to_str().unwrap().to_string()).collect();
-
-        if self.shorten {
-            Self::shorten_parts(&mut parts);
-        };
-
-        if let Some(_) = home_path {
-            parts[0] = self.home_string.clone().unwrap();
+        let mut parts: Vec<String>;
+        if let Some(hd) = home_path {
+            parts = hd.components().map(|part|part.as_os_str().to_str().unwrap().to_string()).collect();
+            parts.insert(0, self.home_string.clone().unwrap());
+            if self.shorten {
+                Self::shorten_parts(&mut parts);
+            };
         } else {
-            parts[0] = "".to_string();
+            parts = cwd.components().map(|part|part.as_os_str().to_str().unwrap().to_string()).collect();
+            if self.shorten {
+                Self::shorten_parts(&mut parts);
+            };
         }
 
-        return parts.join(&self.seperator).to_string();
+        return Some(parts.join(&self.seperator).to_string());
     }
 }

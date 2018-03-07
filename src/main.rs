@@ -49,21 +49,7 @@ fn path() -> Option<String> {
         seperator: "/".to_string(),
         shorten: true,
     };
-    Some(path.to_string())
-    // match Path::new(".").canonicalize() {
-    //     Ok(path) => {
-    //         let r = path.to_str().unwrap().to_string();
-    //         match env::var("HOME") {
-    //             Ok(home) => {
-    //                 let mat = Regex::new(format!("^{}", home).as_str()).unwrap();
-    //                 // Some(mat.replace(&r, "~").into_owned())⌂
-    //                 Some(mat.replace(&r, "⌂").into_owned())
-    //             },
-    //             Err(_) => Some(r)
-    //         }
-    //     },
-    //     Err(_) => None
-    // }
+    path.to_string()
 }
 
 fn sc_prompt(app: &ArgMatches) {
