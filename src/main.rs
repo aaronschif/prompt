@@ -6,6 +6,7 @@ extern crate clap;
 extern crate hostname;
 
 mod git;
+mod providers;
 
 use std::path::Path;
 use std::env;
@@ -16,6 +17,14 @@ use termion::{color, style};
 use regex::Regex;
 
 use git::{format, Status};
+
+arg_enum!{
+    #[derive(PartialEq, Debug)]
+    pub enum SupportedShells {
+        Zsh,
+        Fish
+    }
+}
 
 fn ssh_hostname() -> Option<String> {
     if let Ok(_) = env::var("SSH_CONNECTION") {
@@ -35,20 +44,26 @@ fn virtualenv() -> Option<String> {
 }
 
 fn path() -> Option<String> {
-    match Path::new(".").canonicalize() {
-        Ok(path) => {
-            let r = path.to_str().unwrap().to_string();
-            match env::var("HOME") {
-                Ok(home) => {
-                    let mat = Regex::new(format!("^{}", home).as_str()).unwrap();
-                    // Some(mat.replace(&r, "~").into_owned())⌂
-                    Some(mat.replace(&r, "⌂").into_owned())
-                },
-                Err(_) => Some(r)
-            }
-        },
-        Err(_) => None
-    }
+    let path = providers::PromptPath {
+        home_string: Some("~".to_string()),
+        seperator: "/".to_string(),
+        shorten: true,
+    };
+    Some(path.to_string())
+    // match Path::new(".").canonicalize() {
+    //     Ok(path) => {
+    //         let r = path.to_str().unwrap().to_string();
+    //         match env::var("HOME") {
+    //             Ok(home) => {
+    //                 let mat = Regex::new(format!("^{}", home).as_str()).unwrap();
+    //                 // Some(mat.replace(&r, "~").into_owned())⌂
+    //                 Some(mat.replace(&r, "⌂").into_owned())
+    //             },
+    //             Err(_) => Some(r)
+    //         }
+    //     },
+    //     Err(_) => None
+    // }
 }
 
 fn sc_prompt(app: &ArgMatches) {
@@ -123,6 +138,12 @@ fn main() {
         .version(crate_version!())
         .author(crate_authors!())
         .about("Prints your prompt.")
+        .arg(Arg::with_name("shell")
+                .takes_value(true)
+                .long("shell")
+                .default_value("zsh")
+                .possible_values(&SupportedShells::variants())
+                .case_insensitive(true))
         .subcommand(SubCommand::with_name("prompt")
             .arg(Arg::with_name("lasterror")
                 .takes_value(true)
