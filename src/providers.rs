@@ -51,6 +51,10 @@ impl PromptPath {
             if self.shorten {
                 Self::shorten_parts(&mut parts);
             };
+            if parts.len() > 1 {
+                parts.push("".to_string());
+                parts.swap_remove(0);
+            }
         }
 
         return Some(parts.join(&self.seperator).to_string());
