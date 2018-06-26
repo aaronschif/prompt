@@ -38,16 +38,16 @@ impl Status {
         };
         if let Ok(raw_statuses) = repo.statuses(None) {
             for raw_status in raw_statuses.iter().map(|e| e.status()) {
-                if raw_status.intersects(git2::STATUS_WT_NEW) {
+                if raw_status.intersects(git2::Status::WT_NEW) {
                     status.new_files += 1;
                 }
-                if raw_status.intersects(git2::STATUS_INDEX_NEW | git2::STATUS_INDEX_MODIFIED |
-                        git2::STATUS_INDEX_DELETED | git2::STATUS_INDEX_RENAMED |
-                        git2::STATUS_INDEX_TYPECHANGE) {
+                if raw_status.intersects(git2::Status::INDEX_NEW | git2::Status::INDEX_MODIFIED |
+                        git2::Status::INDEX_DELETED | git2::Status::INDEX_RENAMED |
+                        git2::Status::INDEX_TYPECHANGE) {
                     status.index_files += 1;
                 }
-                if raw_status.intersects(git2::STATUS_WT_MODIFIED | git2::STATUS_WT_DELETED |
-                        git2::STATUS_WT_TYPECHANGE | git2::STATUS_WT_RENAMED) {
+                if raw_status.intersects(git2::Status::WT_MODIFIED | git2::Status::WT_DELETED |
+                        git2::Status::WT_TYPECHANGE | git2::Status::WT_RENAMED) {
                     status.working_files += 1;
                 }
             }
