@@ -1,22 +1,17 @@
-extern crate termion;
-extern crate regex;
-extern crate git2;
-#[macro_use]
-extern crate clap;
-extern crate hostname;
-
 mod git;
 mod providers;
+mod formatter;
 
 use std::path::Path;
 use std::env;
 
 use hostname::get_hostname;
-use clap::{App, Arg, SubCommand, ArgMatches};
+use clap::{App, Arg, SubCommand, ArgMatches, arg_enum, _clap_count_exprs};
 use termion::{color, style};
 use regex::Regex;
 
-use git::{format, Status};
+use self::git::{format, Status};
+use self::formatter::{Formatter};
 
 arg_enum!{
     #[derive(PartialEq, Debug)]
@@ -121,8 +116,8 @@ fn sc_precmd(_: &ArgMatches) {
 
 fn main() {
     let app = App::new("prompt")
-        .version(crate_version!())
-        .author(crate_authors!())
+        .version(clap::crate_version!())
+        .author(clap::crate_authors!())
         .about("Prints your prompt.")
         .arg(Arg::with_name("shell")
                 .takes_value(true)
