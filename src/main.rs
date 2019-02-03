@@ -1,23 +1,26 @@
 mod git;
 mod providers;
 mod formatter;
+mod shells;
 
 use std::path::Path;
 use std::env;
 
 use hostname::get_hostname;
-use clap::{App, Arg, SubCommand, ArgMatches, arg_enum, _clap_count_exprs};
+use clap::{App, Arg, SubCommand, ArgMatches, arg_enum, _clap_count_exprs, value_t};
 use termion::{color, style};
 use regex::Regex;
 
 use self::git::{format, Status};
 use self::formatter::{Formatter};
+use self::shells::{Zsh, Fish, Bash, Shell, Style};
 
 arg_enum!{
     #[derive(PartialEq, Debug)]
     pub enum SupportedShells {
         Zsh,
-        Fish
+        Bash,
+        Fish,
     }
 }
 
@@ -47,11 +50,13 @@ fn path() -> Option<String> {
     path.to_string()
 }
 
-fn sc_prompt(app: &ArgMatches) {
-    let bold = format!("%{{{}%}}", style::Bold);
+fn sc_prompt(shell: &Shell, app: &ArgMatches) {
+    let bold = format!("{}", Style(shell, &style::Bold, &""));
     let reset = format!("%{{{}{}%}}", color::Fg(color::Reset), style::Reset);
-    let fg = format!("%{{{}%}}", color::Fg(color::Rgb(0, 147, 255)));
-    let bg = format!("%{{{}%}}", color::Fg(color::Rgb(51, 232, 29)));
+    // let fg = format!("%{{{}%}}", color::Fg(color::Rgb(0, 147, 255)));
+    // let bg = format!("%{{{}%}}", color::Fg(color::Rgb(51, 232, 29)));
+    let fg = format!("%{{{}%}}", color::Fg(color::Rgb(0, 192, 124)));
+    let bg = format!("%{{{}%}}", color::Fg(color::Rgb(3, 97, 188)));
 
     let mut result: String = "".to_string();
 
@@ -93,8 +98,8 @@ fn sc_prompt(app: &ArgMatches) {
 fn sc_init(_: &ArgMatches) {
     println!(r#"
         PROMPT='$({exe} prompt --last-error $?)'
-        function _make_prompt {{ {exe} preexec "" }}
-        function _make_stop_prompt {{ {exe} precmd }}
+        function preexec {{ {exe} preexec "$1" }}
+        function precmd {{ {exe} precmd }}
         typeset -a preexec_functions
         preexec_functions+=_make_prompt
         typeset -a precmd_functions
@@ -140,8 +145,14 @@ fn main() {
         .subcommand(SubCommand::with_name("precmd"))
         .get_matches();
 
+    let shell: Box<Shell> = match value_t!(app, "shell", SupportedShells).unwrap() {
+        SupportedShells::Zsh => Box::new(Zsh),
+        SupportedShells::Bash => Box::new(Bash),
+        SupportedShells::Fish => Box::new(Fish),
+    };
+
     if let Some(matches) = app.subcommand_matches("prompt") {
-        sc_prompt(&matches);
+        sc_prompt(&*shell, &matches);
     } else if let Some(matches) = app.subcommand_matches("init") {
         sc_init(&matches);
     } else if let Some(matches) = app.subcommand_matches("preexec") {
