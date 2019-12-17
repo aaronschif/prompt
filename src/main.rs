@@ -64,9 +64,9 @@ fn sc_prompt(shell: &Shell, app: &ArgMatches) {
 
     match app.value_of("lasterror") {
         Some(last_error) if last_error != "0" =>
-            result.push_str(&format!("{}✘{}{} ", fg, bg, last_error)),
+            result.push_str(&format!("{}✘{}{:_>3} ", fg, bg, last_error)),
         _ =>
-            result.push_str(&format!("{}✔{} ", fg, bg)),
+            result.push_str(&format!("{}✔{}__0 ", fg, bg)),
     }
 
     if let Some(hostname) = ssh_hostname() {
